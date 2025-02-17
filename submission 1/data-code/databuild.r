@@ -17,23 +17,27 @@ pacman::p_load(tidyverse, ggplot2, dplyr, lubridate, stringr, readxl, data.table
                        enrollment = col_double()
                        ),na="*")
 
+if (!require("pacman")) install.packages("pacman")
+pacman::p_load(tidyverse, ggplot2, dplyr, lubridate, stringr, readxl, data.table, gdata, scales)
 
-service_area.info=read_csv("data/input/MA_Cnty_SA_2015_01.csv",
-                          skip=1,
-                          col_names=c("contractid","org_name","org_type","plan_type","partial","eghp",
-                                      "ssa","fips","county","state","notes"),
-                          col_types = cols(
-                            contractid = col_character(),
-                            org_name = col_character(),
-                            org_type = col_character(),
-                            plan_type = col_character(),
-                            partial = col_logical(),
-                            eghp = col_character(),
-                            ssa = col_double(),
-                            fips = col_double(),
-                            county = col_character(),
-                            notes = col_character()
-                            ),na='*')
 
-merged_data=merge(enroll.info, service_area.info, by = c("contractid", "ssa", "fips", "county", "state"), all = FALSE)
+# Read data and set workspace for knitr -------------------------------
 
+
+# Create objects for markdown ---------------------------------------------
+
+plan.type.table <- enroll.info %>% group_by(plan_type) %>% count() %>% arrange(-n)
+tot.obs <- as.numeric(count(enroll.info %>% ungroup()))
+plan.type.year1 <- enroll.info %>% group_by(plan_type) %>% count() %>% arrange(-n) %>% filter(plan_type!="NA")
+
+final.plans <- enroll.info %>%
+  filter(snp == "No" & eghp == "No" &
+           (planid < 800 | planid >= 900))
+plan.type.year2 <- final.plans %>% group_by(plan_type) %>% count() %>% arrange(-n)
+
+plan.type.enroll <- final.plans %>% group_by(plan_type) %>% summarize(n=n(), enollment=mean(enrollment, na.rm=TRUE)) %>% arrange(-n)
+
+
+
+rm(list=c("full.ma.data", "contract.service.area","final.data"))
+save.image("submission1/Hwk1_workspace.Rdata")
